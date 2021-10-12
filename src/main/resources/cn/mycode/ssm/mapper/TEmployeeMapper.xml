@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.mycode.ssm.mapper.TEmployeeMapper">
+
+    <resultMap id="employeeResultMap" type="cn.mycode.ssm.domain.Employee">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="password" column="password"/>
+        <result property="email" column="email"/>
+        <result property="age" column="age"/>
+        <result property="dept.id" column="deptId"/>
+        <result property="dept.name" column="deptName"/>
+    </resultMap>
+
+    <select id="selectEmployee" resultMap="employeeResultMap">
+        select e.id,e.name,e.password,e.email,e.age,e.deptId,d.name as deptName
+        from employee as e left join department as d
+                                      on e.deptId=d.id
+        <include refid="whereSql"></include>
+
+        order by e.id desc
+        <if test="currentPage !=null and pageSize!=null">
+            limit #{startIndex},#{pageSize}
+        </if>
+
+    </select>
+
+
+    <select id="selectCount" resultType="int">
+        select count(e.id) from employee as e left join department as d
+        on e.deptId=d.id
+        <include refid="whereSql"></include>
+    </select>
+
+    <sql id="whereSql">
+        <where>
+            <if test="keyword!=null and keyword!=''">
+                (e.name like concat('%',#{keyword},'%') or e.email like concat('%',#{keyword},'%'))
+            </if>
+            <if test="deptId!=null and deptId !=-1">
+                and e.deptId=#{deptId}
+            </if>
+        </where>
+    </sql>
+
+    <delete id="batchDelete">
+        delete from employee where id in
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+
+    <insert id="batchInsert">
+        insert into employee(name,email,age) values
+        <foreach collection="employeeList" item="emp" separator=",">
+            (#{emp.name},#{emp.email},#{emp.age})
+        </foreach>
+    </insert>
+
+    <insert id="insert">
+        insert into employee(name,password,email,age,deptId)
+        values(#{name},#{password},#{email},#{age},#{deptId})
+    </insert>
+</mapper>

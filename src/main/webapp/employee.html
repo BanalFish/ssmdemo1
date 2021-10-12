@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css"/>
+    <script src="/static/layui/layui.js"></script>
+</head>
+<body>
+
+<div class="layui-card">
+    <div class="layui-card-body">
+        <form class="layui-form" id="queryForm" lay-filter="queryForm">
+
+                <div class="layui-inline">
+                    <label class="layui-form-label">关键字</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="keyword"  autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+
+                <div class="layui-inline">
+                    <label class="layui-form-label">部门</label>
+                    <div class="layui-input-inline">
+                        <select name="deptId">
+                            <option value="-1">全部</option>
+
+                        </select>
+                    </div>
+                </div>
+
+                <div class="layui-input-inline">
+                    <button class="layui-btn" lay-submit lay-filter="query">查询</button>
+                </div>
+
+
+        </form>
+    </div>
+</div>
+
+
+<div class="layui-card">
+    <div class="layui-card-body">
+        <table id="empTable" lay-filter="empTable"></table>
+    </div>
+</div>
+
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="add">添加</button>
+        <button class="layui-btn layui-btn-sm" lay-event="batchDelete">批量删除</button>
+        <button class="layui-btn layui-btn-sm" lay-event="import" id="importBtn">导入</button>
+        <button class="layui-btn layui-btn-sm" lay-event="export">导出</button>
+    </div>
+</script>
+
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+
+
+
+<form class="layui-form" id="empForm" lay-filter="empForm" style="display:none">
+    <input type="hidden" name="id"/>
+    <div class="layui-form-item">
+        <label class="layui-form-label">员工名称</label>
+        <div class="layui-input-block">
+            <input type="text" name="name" lay-verify="required|name" required placeholder="请输入员工名称" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">密码</label>
+        <div class="layui-input-block">
+            <input type="password" name="password" lay-verify="required|pass" required placeholder="请输入密码" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">电子邮箱</label>
+        <div class="layui-input-block">
+            <input type="text" name="email" lay-verify="required|email" required placeholder="请输入电子邮箱" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">年龄</label>
+        <div class="layui-input-block">
+            <input type="text" name="age" lay-verify="required|number" required placeholder="请输入年龄" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <label class="layui-form-label">部门</label>
+        <div class="layui-input-block" style="height: 200px;">
+            <select name="deptId"  style="width: 200px;">
+                <option value="-1">全部</option>
+
+            </select>
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit lay-filter="formSubmit">立即提交</button>
+            <button type="reset" class="layui-btn layui-btn-primary" id="resetBnt">重置</button>
+        </div>
+    </div>
+
+</form>
+
+
+
+
+<script type="text/javascript">
+    layui.use(['table','jquery','form','layer','upload'],function () {
+        var table=layui.table;
+        var $=layui.jquery;
+        var form=layui.form;
+        var layer=layui.layer;
+        var upload=layui.upload;
+
+        table.render({
+            elem: '#empTable'//是上面的要展示表格的id
+            , url: '/temployee/list' //方法链接
+            , toolbar: '#toolbarDemo' //开启头部工具栏，并为其绑定左侧模板
+            , defaultToolbar: []
+            , title: '员工管理'
+            , cols: [[
+                {type:'checkbox'},
+                {align:'center',title:'编号',type:'numbers',width:100},//自增编号
+                {field: 'name', title: '员工名称'},
+                {field: 'email', title: '电子邮箱'},
+                {field: 'age', title: '年龄'},
+                {field: 'dept', title: '部门',templet:function (d) {
+                        var result='';
+                        if(d.dept!=null){//如果查询部门编号不为空
+                            result=d.dept.name;
+                        }
+                        return result;
+                    }
+                    },
+                {field: 'right', title: '操作', toolbar: '#barDemo', width: 150}
+            ]],//每一列
+
+            //因为分页默认的参数与设置的不一样，所以需要设置成我们定义的名字
+            request:{
+                pageName:"currentPage",
+                limitName:"pageSize"
+            },
+
+            //定义后端传到前端的结果
+            parseData:function (res) {
+                return{
+                    "code": 0,
+                    "msg": res.msg,
+                    "count": res.data.totalCount,
+                    "data": res.data.data
+
+                }
+            },
+
+            page:true
+        });
+
+
+        //每次重新渲染都要调用这个方法，所以定义一个
+        function deptSelectRender(formId) {//传一个部门id
+            //下拉选项展示部门名称
+            $.ajax({
+                url:'/department/list',
+                type:'get',
+                dataType:'json',
+                success:function (res) {
+                    var data=res.data;
+                    $.each(data,function(index,el){
+                        var node='<option value="'+el.id+'">'+el.name+'</option>';
+                        $("#"+formId).find('select').append(node);
+                    });
+                    form.render('select',formId);//渲染select
+                }
+
+            });
+        }
+
+        deptSelectRender("queryForm");
+
+
+        form.on('submit(query)',function (data) {
+            table.reload('empTable',{//重载刷新页面
+                where:data.field,
+                page:{
+                    curr:1
+                }
+            });
+            return false;
+        });
+
+        //绑定复选方式，把选中的序号都加入这个数组
+        var delArray=new Array();
+        table.on('checkbox(empTable)',function (obj) {
+            var checked=obj.checked;
+            var currentData=obj.data;
+            var checkedType=obj.type;
+            if(checked){
+                if(checkedType==='all'){//选中全部
+                    var checkStatus=table.checkStatus('emptable');//返回数组
+                    var checkedData=checkStatus.data;//获得数组的数据
+                    delArray=new Array();
+                    $.each(checkedData,function(index,el){
+                        delArray.push(el.id);
+                    });
+                }else if(checkedType==='one'){//选中一个
+                    delArray.push(currentData.id);
+                }
+            }else{//取消
+                if(checkedType==='all'){//如果取消的是全部
+                    delArray=new Array();
+                }else if(checkedType==='one'){//如果取消的是一个
+                    var empId=currentData.id;
+                    // 返回当前数据的下标index。如果value===empId
+                    var index=delArray.findIndex(value => value===empId);
+                    delArray.splice(index,1);//从index开始，删1个
+                }
+            }
+console.log(delArray);
+        });
+
+        table.on('toolbar(empTable)',function (obj) {
+            var layEvent=obj.event;
+            if(layEvent==='batchDelete'){
+                if(delArray.length>0){//空数组没意义
+
+                    $.ajax({
+                       url:'/temployee/batchDelete',
+                        type:'post',
+                        traditional:true,//设置参数为true才能把值传到后端
+                        data:{"ids":delArray},
+                        dataType: 'json',
+
+                        success:function (res) {
+                            layer.msg(res.msg);
+                            if(res.success){
+                                delArray=[];//如果成功删除，保存删除序号的数组要清空
+                                table.reload('empTable',[])
+
+                            }
+                        },
+                        error:function () {
+                            layer.msg("批量删除请求失败");
+                        }
+
+                    });
+                }
+            }else if(layEvent==='export'){
+
+                //把参数拼到了url后面
+                window.location.href="/temployee/export?"+$("#queryForm").serialize();
+            }else if(layEvent==='add'){
+                layer.open({
+                    title:'添加员工信息',
+                    type:1,
+                    content:$("#empForm"),
+                    area:['500px','600px'],
+                    //回调方法
+                    success:function(){
+                        deptSelectRender("empForm");
+                        //如果不触发submit就不能触发验证规则
+                        form.on('submit(formSubmit)',function (data) {
+                            $.ajax({
+                                url:'/temployee/add',
+                                type:'post',
+                                data:data.field,
+                                dataType:'json',
+                                success:function(res){
+                                    layer.msg(res.msg);
+                                    if(res.success){
+                                        table.reload('empTable',{});
+                                        layer.closeAll('page');
+                                    $("#empForm").find("input").val('');
+                                    $("#empForm").find('select').val(1);
+
+                                    }
+                                }
+                            })
+                            return false;
+                        });
+                        $("#resetBnt").click(function () {
+                            $("#empForm").find("input").val('');
+                            $("#empForm").find('select').val(1);
+
+                        });
+                    },
+                    cancel:function () {
+                        $("#empForm").find("input").val('');
+                        $("#empForm").find('select').val(1);
+                    }
+                });
+            }
+        });
+
+        form.verify({
+            name:function (value,itemm) {
+                if(value!==null &&value.length>10){
+                    return "用户名不能超过10个字";
+                }
+            },
+            pass:function (value,item) {
+                //正则表达式
+                var test='^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{8,16}$';
+                var reg= new RegExp(test);
+                if(!reg.test(value)){
+                    return "密码格式不符合规则";
+                }
+            }
+        })
+
+        var uploadInst=upload.render({//要放在table.render渲染的后面
+            elem:'#importBtn',
+            url:'/temployee/import',
+            accept:'file',
+            exts:'xls|xlsx',
+            field:'pic',
+            done:function (res,index,upload) {
+                if(res.success){
+                    table.reload('empTable',{});
+                }
+            }
+        });
+
+    });
+
+</script>
+
+
+</body>
+</html>

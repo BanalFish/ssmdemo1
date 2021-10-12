@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css"/>
+    <script src="/static/layui/layui.js"></script>
+</head>
+<body>
+
+<!--顶部查询栏 -->
+<div class="layui-card">
+    <div class="layui-card-body">
+        <form class="layui-form" id="queryForm" lay-filter="queryForm">
+
+            <div class="layui-inline">
+                <label class="layui-form-label">关键字</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="keyword" autocomplete="off" class="layui-input"
+                    placeholder="请输入姓名或电话">
+                </div>
+            </div>
+
+            <div class="layui-inline">
+                <label class="layui-form-label">状态</label>
+                <div class="layui-input-inline">
+                    <select name="statusID">
+                        <option value="-3">全部</option>
+
+                    </select>
+                </div>
+            </div>
+
+            <div class="layui-input-inline">
+                <button class="layui-btn" lay-submit lay-filter="query">查询</button>
+            </div>
+
+
+        </form>
+    </div>
+</div>
+
+
+<!-- 数据展示表框 命名 为cusTable-->
+<div class="layui-card">
+    <div class="layui-card-body">
+        <table id="cusTable" lay-filter="cusTable"></table>
+    </div>
+</div>
+
+
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="add">添加</button>
+        <button class="layui-btn layui-btn-sm" lay-event="batchDelete">批量删除</button>
+        <button class="layui-btn layui-btn-sm" lay-event="import" id="importBtn">导入</button>
+        <button class="layui-btn layui-btn-sm" lay-event="export">导出</button>
+    </div>
+</script>
+
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+
+
+<!--表单。交互的 -->
+<form class="layui-form" id="cusForm" lay-filter="cusForm" style="display:none">
+    <input type="hidden" name="id"/>
+    <div class="layui-form-item">
+        <label class="layui-form-label">客户姓名</label>
+        <div class="layui-input-block">
+            <input type="text" name="name" lay-verify="required|name" required placeholder="请输入客户姓名(不能超过十个字)" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">年龄</label>
+        <div class="layui-input-block">
+            <input type="text" name="age" lay-verify="required|number" required placeholder="请输入年龄" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">性别</label>
+        <div class="layui-input-block">
+            <select name="gender"  style="width: 200px;">
+                <option value="-1">全部</option>
+
+            </select>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">电话</label>
+        <div class="layui-input-block">
+            <!--进行verify电话检验 -->
+            <input type="text" name="tel" lay-verify="required|tel" required placeholder="请输入电话" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">qq</label>
+        <div class="layui-input-block">
+            <!--进行verify电话检验 -->
+            <input type="text" name="qq" required placeholder="请输入qq" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">工作</label>
+        <div class="layui-input-block">
+            <input type="text" name="job"  required placeholder="请输入工作" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">收入来源</label>
+        <div class="layui-input-block">
+            <input type="text" name="source"  required placeholder="请输入收入来源" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">状态</label>
+        <div class="layui-input-block" style="height: 200px;">
+            <select name="statusID"  style="width: 200px;">
+                <option value="-3">全部</option>
+
+            </select>
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit lay-filter="formSubmit">立即提交</button>
+            <button type="reset" class="layui-btn layui-btn-primary" id="resetBnt">重置</button>
+        </div>
+    </div>
+
+</form>
+
+
+
+
+<script type="text/javascript">
+    layui.use(['table','jquery','form','layer','upload'],function () {
+        var table=layui.table;
+        var $=layui.jquery;
+        var form=layui.form;
+        var layer=layui.layer;
+        var upload=layui.upload;
+
+        table.render({
+            elem: '#cusTable'//是上面的要展示表格的id
+            , url: '/customer/list' //方法链接
+            , toolbar: '#toolbarDemo' //开启头部工具栏，并为其绑定左侧模板
+            , defaultToolbar: []
+            , title: '顾客管理'
+            , cols: [[
+                {type:'checkbox'},
+                {align:'center',title:'编号',type:'numbers',width:100},//自增编号
+                {field: 'name', title: '顾客姓名'},
+                {field: 'age', title: '年龄'},
+                {field: 'gender', title: '性别'},
+                {field: 'tel', title: '电话'},
+                {field: 'qq', title: 'qq'},
+                {field: 'job', title: '工作'},
+                {field: 'source', title: '收入来源'},
+                {field: 'sellerID', title: '营销人员'},
+                {field: 'status', title: '状态',templet:function (c) {
+                        var result='';
+                        if(c.status!=null){
+                            result=c.status.name;
+                        }
+                        return result;
+                    }},
+                {field: 'right', title: '操作', toolbar: '#barDemo', width: 150}
+            ]],//每一列
+
+            //因为分页默认的参数与设置的不一样，所以需要设置成我们定义的名字
+            request:{
+                pageName:"currentPage",
+                limitName:"pageSize"
+            },
+
+            //定义后端传到前端的结果
+            parseData:function (res) {
+                return{
+                    "code": 0,
+                    "msg": res.msg,
+                    "count": res.data.totalCount,
+                    "data": res.data.data
+
+                }
+            },
+
+            page:true
+        });
+
+
+        //每次重新渲染 展示状态 方法
+        function statusSelectRender(formId) {//传一个部门id
+            //下拉选项展示部门名称
+            $.ajax({
+                url:'/customer/list',
+                type:'get',
+                dataType:'json',
+                success:function (res) {
+                    var data=res.data;
+                    $.each(data,function(index,el){
+                        var node='<option value="'+el.id+'">'+el.name+'</option>';
+                        $("#"+formId).find('select').append(node);
+                    });
+                    form.render('select',status);//渲染select
+                }
+
+            });
+        }
+
+        //什么？？
+        statusSelectRender("queryForm");
+
+
+        form.on('submit(query)',function (data) {
+            table.reload('cusTable',{//重载刷新页面
+                where:data.field,
+                page:{
+                    curr:1
+                }
+            });
+            return false;
+        });
+
+        //绑定复选方式，把选中的序号都加入这个数组
+        var delArray=new Array();
+        table.on('checkbox(cusTable)',function (obj) {
+            var checked=obj.checked;
+            var currentData=obj.data;
+            var checkedType=obj.type;
+            if(checked){
+                if(checkedType==='all'){//选中全部
+                    var checkStatus=table.checkStatus('custable');//返回数组
+                    var checkedData=checkStatus.data;//获得数组的数据
+                    delArray=new Array();
+                    $.each(checkedData,function(index,el){
+                        delArray.push(el.id);
+                    });
+                }else if(checkedType==='one'){//选中一个
+                    delArray.push(currentData.id);
+                }
+            }else{//取消
+                if(checkedType==='all'){//如果取消的是全部
+                    delArray=new Array();
+                }else if(checkedType==='one'){//如果取消的是一个
+                    var empId=currentData.id;
+                    // 返回当前数据的下标index。如果value===empId
+                    var index=delArray.findIndex(value => value===empId);
+                    delArray.splice(index,1);//从index开始，删1个
+                }
+            }
+            //控制台打印要删除的数组
+            console.log(delArray);
+        });
+
+        table.on('toolbar(cusTable)',function (obj) {
+            var layEvent=obj.event;
+            if(layEvent==='batchDelete'){
+                if(delArray.length>0){//空数组没意义
+
+                    $.ajax({
+                        url:'/temployee/batchDelete',
+                        type:'post',
+                        traditional:true,//设置参数为true才能把值传到后端
+                        data:{"ids":delArray},
+                        dataType: 'json',
+
+                        success:function (res) {
+                            layer.msg(res.msg);
+                            if(res.success){
+                                delArray=[];//如果成功删除，保存删除序号的数组要清空
+                                table.reload('cusTable',[])
+
+                            }
+                        },
+                        error:function () {
+                            layer.msg("批量删除请求失败");
+                        }
+
+                    });
+                }
+            }else if(layEvent==='export'){
+
+                //把参数拼到了url后面
+                //.serialize(); 功能:将表单内容序列化成一个字符串。
+                // 这样在ajax提交表单数据时,就不用一一列举出每一个参数
+                window.location.href="/customer/export?"+$("#queryForm").serialize();
+            }else if(layEvent==='add'){
+                layer.open({
+                    title:'添加顾客信息',
+                    type:1,
+                    content:$("#cusForm"),
+                    area:['500px','600px'],
+                    //回调方法
+                    success:function(){
+                        statusSelectRender("cusForm");
+                        //如果不触发submit就不能触发验证规则
+                        form.on('submit(formSubmit)',function (data) {
+                            $.ajax({
+                                url:'/customer/add',
+                                type:'post',
+                                data:data.field,
+                                dataType:'json',
+                                success:function(res){
+                                    layer.msg(res.msg);
+                                    if(res.success){
+                                        table.reload('cusTable',{});
+                                        layer.closeAll('page');
+                                        $("#cusForm").find("input").val('');
+                                        $("#cusForm").find('select').val(1);
+
+                                    }
+                                }
+                            })
+                            return false;
+                        });
+                        $("#resetBnt").click(function () {
+                            $("#cusForm").find("input").val('');
+                            $("#cusForm").find('select').val(1);
+
+                        });
+                    },
+                    cancel:function () {
+                        $("#cusForm").find("input").val('');
+                        $("#cusForm").find('select').val(1);
+                    }
+                });
+            }
+        });
+
+        form.verify({
+            name:function (value,itemm) {
+                if(value!==null &&value.length>10){
+                    return "用户名不能超过10个字";
+                }
+            },
+            tel:function (value,item){
+                if(value!==null &&value.length!=10){
+                    return "格式不符合";
+                }
+            }
+        })
+
+        var uploadInst=upload.render({//要放在table.render渲染的后面
+            elem:'#importBtn',
+            url:'/customer/import',
+            accept:'file',
+            exts:'xls|xlsx',
+            field:'pic',
+            done:function (res,index,upload) {
+                if(res.success){
+                    table.reload('cusTable',{});
+                }
+            }
+        });
+
+    });
+
+</script>
+
+
+
+</body>
+</html>

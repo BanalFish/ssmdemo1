@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE mapper
+                PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+                "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.mycode.ssm.mapper.EmployeeMapper">
+        <resultMap id="employeeRes" type="cn.mycode.ssm.domain.Employee">
+            <id property="id" column="id"/>
+            <result property="name" column="name"/>
+            <result property="password" column="password"/>
+            <result property="email" column="email"/>
+            <result property="age" column="age"/>
+            <result property="admin" column="admin"/>
+            <result property="dept.id" column="deptId"/>
+            <result property="dept.name" column="deptName"/>
+            <result property="dept.sn" column="deptSn"/>
+        </resultMap>
+
+    <select id="listAll" resultMap="employeeRes">
+        select e.id,e.name,e.password,
+               e.email,e.age,e.admin,e.deptId,
+               d.name as deptName,d.sn as deptSn from employee as e join department as d
+                on e.deptId=d.id
+    </select>
+
+    <select id="selectOne" resultMap="employeeRes">
+        select e.id,e.name,e.password,
+               e.email,e.age,e.admin,e.deptId,
+               d.name as deptName,d.sn as deptSn from employee as e join department as d
+                on e.deptId=d.id where e.id=#{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        insert into employee(name,password,email,age,admin,deptId)
+        values(#{name},#{password},#{email},#{age},#{admin},#{dept.id})
+    </insert>
+
+    <delete id="delete">
+        delete from employee where id=#{empId}
+    </delete>
+
+    <update id="update">
+        update employee set name=#{name},password=#{password},email=#{email},
+                            age=#{age},admin=#{admin},deptId=#{dept.id}
+    </update>
+
+</mapper>

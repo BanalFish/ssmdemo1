@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.mycode.ssm.mapper.CustomerMapper">
+
+    <select id="selectCount" resultType="int">
+        select count(c.id) from customer as c left join employee as e
+        on c.sellerID=e.id
+        <include refid="whereSql"></include>
+    </select>
+
+    <resultMap id="customerResultMap" type="cn.mycode.ssm.domain.Customer">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="gender" column="gender"/>
+        <result property="tel" column="tel"/>
+        <result property="qq" column="qq"/>
+        <result property="job" column="job"/>
+        <result property="source" column="source"/>
+        <result property="seller.id" column="sellerID"/>
+<!--        <result property="inputUser.id" column="inputUserID"/>-->
+<!--        <result property="inputTime" column="inputTime"/>-->
+        <result property="status.name" column="statusName"/>
+<!--        <result property="positiveTime" column="positiveTime"/>-->
+    </resultMap>
+
+    <select id="selectCustomer" resultMap="customerResultMap">
+        select c.id,c.name,c.age,c.gender,c.tel,c.qq,c.job,c.source,e.name,s.name
+        from customer as c,employee as e,status as s
+        where c.sellerID=e.id and c.statusID=s.id
+        <include refid="whereSql"></include>
+
+        order by c.id desc
+        <if test="currentPage !=null and pageSize !=null">
+            limit #{startIndex},#{pageSize}
+        </if>
+    </select>
+
+    <delete id="batchDelete">
+        delete * from customer where id in
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!--自动添加sellerID-->
+    <insert id="insert">
+        insert into customer(name,age,gender,tel,qq,job,source,sellerID,statusID)
+        values(#{name},#{age},#{gender},#{tel},#{qq},#{job},#{source},,#{sellerID},#{statusID})
+    </insert>
+
+    <insert id="batchInsert">
+        insert into customer(name,age,gender,tel,qq,job,source,sellerID,statusID) values
+        <foreach collection="customerList" item="cus" separator=",">
+            (#{name},#{age},#{gender},#{tel},#{qq},#{job},#{source},,#{sellerID},#{statusID})
+        </foreach>
+    </insert>
+
+    <sql id="whereSql">
+        <where>
+            <if test="keyword!=null and keyword !=''">
+                (c.name like concat('%',#{keyword},'%') or c.tel like concat('%',#{keyword},'%'))
+            </if>
+
+                <!--有待考证 -->
+            <if test="sellerID!=null and sellerID!=''">
+                and c.sellerID=#{sellerID}
+            </if>
+        </where>
+    </sql>
+
+</mapper>

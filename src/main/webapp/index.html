@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css"/>
+    <script src="/static/layui/layui.js"></script>
+</head>
+<body>
+<div class="layui-layout layui-layout-admin">
+    <div class="layui-header">
+        <div class="layui-logo layui-hide-xs layui-bg-black">管理系统</div>
+        <!-- 头部区域（可配合layui 已有的水平导航） -->
+
+
+    </div>
+
+    <div class="layui-side layui-bg-black">
+        <div class="layui-side-scroll">
+            <!-- 左侧导航区域（可配合layui已有的垂直导航） -->
+            <ul class="layui-nav layui-nav-tree" lay-filter="test">
+                <li class="layui-nav-item layui-nav-itemed">
+                    <a class="" href="javascript:;">系统设置</a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="javascript:;" class="menuUrl" data="/department.html">部门管理</a></dd>
+                        <dd><a href="javascript:;" class="menuUrl" data="/employee.html">员工管理</a></dd>
+                        <dd>
+                            <a href="javascript:;" class="menuUrl" data="/customer.html">客户管理</a>
+                            <ol class="layui-nav-child">
+                                <li><a href="javascript:;" class="menuUrl" data="/potenCus.html">潜在客户管理</a></li>
+                                <li><a href="javascript:;" class="menuUrl" data="/formalCus.html">正式客户管理</a></li>
+                            </ol>
+                        </dd>
+                    </dl>
+                </li>
+
+            </ul>
+        </div>
+    </div>
+
+    <div class="layui-body">
+        <!-- 内容主体区域 -->
+        <iframe src="/department.html" frameborder="0" id="demoAdmin" style="width: 100%; height: 100%; border-radius: 2px;"></iframe>
+
+    </div>
+
+    <div class="layui-footer">
+        <!-- 底部固定区域 -->
+        底部固定区域
+    </div>
+
+    <script type="text/javascript">
+        layui.use(['jquery'],function () {
+            var $=layui.jquery;
+            <!--点击就切换页面。所以是给点的那个链接取名为menuUrl，并且绑定事件。事件在底下定义。 -->
+            $(".menuUrl").click(function () {
+                <!--attr表示取出"data"属性里的值，这里为xx.html ，然后赋给menuUrl这个定义的变量-->
+                var menuUrl=$(this).attr("data");
+                <!--这里的attr作用是把选定id值为demoAdmin 里的"src"属性修改为menuUrl -->
+                $("#demoAdmin").attr("src",menuUrl);
+            });
+        })
+    </script>
+</div>
+
+</body>
+</html>
